@@ -83,4 +83,9 @@ export const useStyles = makeStyles((theme) => ({
   fixedHeight: {
     height: 240,
   },
+  absolute: {
+    position: 'absolute',
+    bottom: theme.spacing(3),
+    right: theme.spacing(13),
+  },
 }));

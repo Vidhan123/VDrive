@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import DStorage from '../abis/DStorage.json';
 import Web3 from 'web3';
 import clsx from 'clsx';
-import { CssBaseline, Drawer, Box, AppBar, Toolbar, List, Typography, Divider, IconButton, Badge, Container, Grid, Paper, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader } from '@material-ui/core';
-import { Menu, ChevronLeft, InsertDriveFile, FolderShared, QueryBuilder, StarBorder, DeleteOutline, Storage, CloudQueue, LibraryBooks } from '@material-ui/icons';
+import { CssBaseline, Drawer, Box, AppBar, Toolbar, List, Typography, Divider, IconButton, Badge, Container, Grid, Paper, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader, Fab, Tooltip } from '@material-ui/core';
+import { Menu, ChevronLeft, FolderShared, QueryBuilder, StarBorder, DeleteOutline, Storage, CloudQueue, LibraryBooks, Add } from '@material-ui/icons';
 import MyDrive from './Sections/MyDrive/MyDrive';
 import Others from './Sections/Others/Others';
 import SideIcons from './SideIcons';
@@ -11,6 +11,7 @@ import LinearWithValueLabel from './LinearProgressWithLabel';
 import { myColor } from './helpers';
 import { useStyles } from './styles';
 import Identicon from 'identicon.js';
+import Swal from 'sweetalert2';
 import './App.css';
 
 import logo from '../assets/logo.png';
@@ -22,6 +23,7 @@ function App() {
   const [account, setAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
+  const [fileDescription, setFileDescription] = useState('');
   const [filesCount, setFilesCount] = useState(0);
   const [dstorage, setDstorage] = useState(null);
   const [type, setType] = useState(null);
@@ -59,37 +61,26 @@ function App() {
       const NoOfFiles = await dstorage.methods.fileCount().call()
       setFilesCount(NoOfFiles);
       // Load files&sort by the newest
-      for (var i = NoOfFiles; i >= 1; i--) {
-        const file = await dstorage.methods.files(i).call()
-        setFiles([...files, file]);
+      let file;
+      let myFiles = [];
+      for (let i = NoOfFiles; i >= 1; i--) {
+        file = await dstorage.methods.files(i).call()
+        myFiles.push(file);
       }
+      console.log(myFiles);
+      setFiles(myFiles);
     } else {
       window.alert('DStorage contract not deployed to detected network.')
     }
   }
 
-  // Get file from user
-  const captureFile = (event) => {
-    event.preventDefault()
-
-    const file = event.target.files[0]
-    const reader = new window.FileReader()
-
-    reader.readAsArrayBuffer(file)
-    reader.onloadend = () => {
-      setBuffer(Buffer(reader.result));
-      setType(file.type);
-      setName(file.name);
-      console.log('buffer', Buffer(reader.result))
-    }
-  }
-
-  const uploadFile = (description) => {
+  const uploadFile = (myBuffer, file, myDes) => {
     console.log("Submitting file to IPFS...")
 
+    console.log(myBuffer);
     // Add file to the IPFS
-    ipfs.add(buffer, (error, result) => {
-      console.log('IPFS result', result.size)
+    ipfs.add(myBuffer, (error, result) => {
+      console.log('IPFS result', result)
       if(error) {
         console.error(error)
         return;
@@ -97,20 +88,89 @@ function App() {
 
       setLoading(true);
       // Assign value for the file without extension
-      if(type === ''){
+      if(file.type === ''){
         setType('none');
       }
-      dstorage.methods.uploadFile(result[0].hash, result[0].size, type, name, description).send({ from: account }).on('transactionHash', (hash) => {
+      console.log(result[0].hash,result[0].size, file.type, file.name, myDes);
+      dstorage.methods.uploadFile(result[0].hash, result[0].size, file.type, file.name, myDes).send({ from: account }).on('transactionHash', (hash) => {
         setLoading(false);
         setType(null);
         setName(null);
-        window.location.reload()
+        // window.location.reload()
       }).on('error', (e) =>{
         window.alert('Error')
         setLoading(false);
       })
     })
   }
+
+  // Get file from user
+  const captureFile = async (file, myDes) => {
+    // event.preventDefault()
+    // const file = event.target.files[0]
+    const reader = new window.FileReader()
+    let myBuffer;
+    await reader.readAsArrayBuffer(file)
+    reader.onloadend = async () => {
+      myBuffer = await Buffer(reader.result);
+      setBuffer(Buffer(reader.result));
+      setType(file.type);
+      setName(file.name);
+
+      uploadFile(myBuffer,file,myDes);
+    }
+  }
+
+  // Open Modal for file upload
+  const handleOpenFileUpload = () => {
+    let myDes;
+    Swal.fire({
+      input: 'text',
+      title: 'Step 1',
+      text: 'Enter a name/description for your file',
+      confirmButtonText: 'Next &rarr;',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      backdrop: false,
+      customClass: {
+        container: 'my-swal'
+      }
+    }).then((result) => {
+      if (result.value) {
+        const answers = result.value;
+        myDes = answers;
+        setFileDescription(answers);
+        
+        Swal.fire({
+          input: 'file',
+          title: 'Step 2',
+          confirmButtonText: 'Upload',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          backdrop: false,
+          customClass: {
+            container: 'my-swal'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            captureFile(result.value, myDes);
+
+            Swal.fire({
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              title: 'File Uploaded',
+              confirmButtonText: 'Okay',
+              icon: 'success',
+              backdrop: false,
+              customClass: {
+                container: 'my-swal'
+              }
+            })
+          }
+        })
+      }
+    })
+  };
 
   useEffect(() => {
     const Load = async () => {
@@ -119,6 +179,10 @@ function App() {
     }
     Load();
   }, [])
+
+  useEffect(() =>{
+    loadBlockchainData();
+  }, [loading])
 
   const classes = useStyles();
 
@@ -176,7 +240,8 @@ function App() {
       <br />
       <List>
         {myItemsArray.map((item, index) => 
-           <ListItem button 
+           <ListItem button
+           key={index} 
            onClick={() => setSection(item.name)}
            style={{backgroundColor: section === item.name && "rgba(63,81,181,0.4)", color: section === item.name && myColor}}  
           >
@@ -266,11 +331,16 @@ function App() {
         <Container maxWidth="xl" className={classes.container}>
           <div>
             {section ? section === "My Drive" ?
-              <MyDrive />
+              <MyDrive files={files} />
               :
               <Others name={section} />
             : <div></div>}
           </div>
+          <Tooltip title="Upload File" aria-label="add">
+            <Fab color="secondary" className={classes.absolute} style={{outline: 'none', border: 'none'}} onClick={handleOpenFileUpload}>
+              <Add />
+            </Fab>
+          </Tooltip>
         </Container>
       </main>
       <SideIcons />

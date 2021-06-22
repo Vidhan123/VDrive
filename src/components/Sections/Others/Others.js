@@ -1,6 +1,9 @@
 import React from 'react';
 import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography } from '@material-ui/core';
 import { DeleteForever } from '@material-ui/icons';
+import FilesView from '../FilesView';
+
+import { tempFiles } from '../../helpers';
 
 function Others(props) {
 
@@ -21,6 +24,8 @@ function Others(props) {
       </List>
       
       <Divider />
+      <br />
+      <FilesView files={tempFiles} />
     </>
   );
 }

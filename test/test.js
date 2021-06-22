@@ -41,7 +41,7 @@ contract('DStorage', ([deployer, uploader]) => {
 
     //check event
     it('upload file', async () => {
-      // SUCESS
+      // SUCCESS
       assert.equal(fileCount, 1)
       const event = result.logs[0].args
       assert.equal(event.fileId.toNumber(), fileCount.toNumber(), 'Id is correct')
