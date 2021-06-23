@@ -8,6 +8,8 @@ import FoldersView from '../FoldersView';
 
 function MyDrive(props) {
 
+  const { recents, files } = props;
+
   return (
     <>
       <List>
@@ -31,7 +33,7 @@ function MyDrive(props) {
           <ListItemText primary="Recent" />
         </ListItem>      
       </List>
-      <FilesView files={props.files} />
+      <FilesView files={recents} />
 
       <List>
         <ListItem>
@@ -50,7 +52,7 @@ function MyDrive(props) {
           <ListItemText primary="Files" />
         </ListItem>      
       </List>
-      <FilesView files={tempFiles} />
+      <FilesView files={files} />
     </>
   );
 }

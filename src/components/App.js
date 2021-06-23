@@ -23,12 +23,8 @@ function App() {
   const [account, setAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
-  const [fileDescription, setFileDescription] = useState('');
   const [filesCount, setFilesCount] = useState(0);
   const [dstorage, setDstorage] = useState(null);
-  const [type, setType] = useState(null);
-  const [name, setName] = useState(null);
-  const [buffer, setBuffer] = useState(null);
   const [sizeUsed, setSizeUsed] = useState(725.5);
   const [section, setSection] = useState('My Drive');
 
@@ -77,7 +73,6 @@ function App() {
   const uploadFile = (myBuffer, file, myDes) => {
     console.log("Submitting file to IPFS...")
 
-    console.log(myBuffer);
     // Add file to the IPFS
     ipfs.add(myBuffer, (error, result) => {
       console.log('IPFS result', result)
@@ -88,14 +83,16 @@ function App() {
 
       setLoading(true);
       // Assign value for the file without extension
+      let myType = file.type;
       if(file.type === ''){
-        setType('none');
+        myType = 'none';
       }
-      console.log(result[0].hash,result[0].size, file.type, file.name, myDes);
+      if(myDes === ''){
+        myDes = file.name;
+      }
+      console.log(result[0].hash,result[0].size, myType, file.name, myDes);
       dstorage.methods.uploadFile(result[0].hash, result[0].size, file.type, file.name, myDes).send({ from: account }).on('transactionHash', (hash) => {
         setLoading(false);
-        setType(null);
-        setName(null);
         // window.location.reload()
       }).on('error', (e) =>{
         window.alert('Error')
@@ -113,10 +110,7 @@ function App() {
     await reader.readAsArrayBuffer(file)
     reader.onloadend = async () => {
       myBuffer = await Buffer(reader.result);
-      setBuffer(Buffer(reader.result));
-      setType(file.type);
-      setName(file.name);
-
+      
       uploadFile(myBuffer,file,myDes);
     }
   }
@@ -139,7 +133,9 @@ function App() {
       if (result.value) {
         const answers = result.value;
         myDes = answers;
-        setFileDescription(answers);
+        if(!myDes){
+          myDes = '';
+        }
         
         Swal.fire({
           input: 'file',
@@ -233,7 +229,7 @@ function App() {
             : <span></span>
           }
           </ListItemIcon>
-          <ListItemText primary={account.substring(0,6)+'...'+account.substring(38,42)} />
+          <ListItemText primary={account && account.substring(0,6)+'...'+account.substring(38,42)} />
         </ListItem>
       </List>
       <Divider />
@@ -331,7 +327,7 @@ function App() {
         <Container maxWidth="xl" className={classes.container}>
           <div>
             {section ? section === "My Drive" ?
-              <MyDrive files={files} />
+              <MyDrive recents={[]} files={files} />
               :
               <Others name={section} />
             : <div></div>}
