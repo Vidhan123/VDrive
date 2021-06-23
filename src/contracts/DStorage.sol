@@ -52,4 +52,11 @@ contract DStorage {
     // Trigger an event
     emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
   }
+
+  function deleteFile(uint fileId, string memory _fileHash) public {
+    // Make sure the file hash exists
+    require(bytes(_fileHash).length > 0);
+
+    delete files[fileId];   
+  }
 }

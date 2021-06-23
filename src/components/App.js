@@ -12,6 +12,7 @@ import { myColor } from './helpers';
 import { useStyles } from './styles';
 import Identicon from 'identicon.js';
 import Swal from 'sweetalert2';
+import Loading from './Loading/Loading';
 import './App.css';
 
 import logo from '../assets/logo.png';
@@ -61,7 +62,7 @@ function App() {
       let myFiles = [];
       for (let i = NoOfFiles; i >= 1; i--) {
         file = await dstorage.methods.files(i).call()
-        myFiles.push(file);
+        if(file && file.uploader === account) myFiles.push(file);
       }
       console.log(myFiles);
       setFiles(myFiles);
@@ -90,9 +91,19 @@ function App() {
       if(myDes === ''){
         myDes = file.name;
       }
-      console.log(result[0].hash,result[0].size, myType, file.name, myDes);
       dstorage.methods.uploadFile(result[0].hash, result[0].size, file.type, file.name, myDes).send({ from: account }).on('transactionHash', (hash) => {
         setLoading(false);
+        Swal.fire({
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          title: 'File Uploaded',
+          confirmButtonText: 'Okay',
+          icon: 'success',
+          backdrop: false,
+          customClass: {
+            container: 'my-swal'
+          }
+        })
         // window.location.reload()
       }).on('error', (e) =>{
         window.alert('Error')
@@ -113,6 +124,30 @@ function App() {
       
       uploadFile(myBuffer,file,myDes);
     }
+  }
+
+  // Deleting File
+  const deleteFile = async (id, hash) => {
+    setLoading(true);
+
+    dstorage.methods.deleteFile(id, hash).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'File Deleted',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
   }
 
   // Open Modal for file upload
@@ -150,18 +185,7 @@ function App() {
         }).then((result) => {
           if (result.isConfirmed) {
             captureFile(result.value, myDes);
-
-            Swal.fire({
-              allowOutsideClick: false,
-              allowEscapeKey: false,
-              title: 'File Uploaded',
-              confirmButtonText: 'Okay',
-              icon: 'success',
-              backdrop: false,
-              customClass: {
-                container: 'my-swal'
-              }
-            })
+            setLoading(true);
           }
         })
       }
@@ -172,13 +196,15 @@ function App() {
     const Load = async () => {
       await loadWeb3()
       await loadBlockchainData()
+      setLoading(false);
     }
+    setLoading(true);
     Load();
   }, [])
 
-  useEffect(() =>{
+  useEffect(() => {
     loadBlockchainData();
-  }, [loading])
+  }, [loading, account])
 
   const classes = useStyles();
 
@@ -279,6 +305,8 @@ function App() {
   );
 
   return (
+    <>
+    {loading ? <Loading /> :
     <div className={classes.root}>
       <CssBaseline />
       <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
@@ -327,7 +355,7 @@ function App() {
         <Container maxWidth="xl" className={classes.container}>
           <div>
             {section ? section === "My Drive" ?
-              <MyDrive recents={[]} files={files} />
+              <MyDrive recents={[]} files={files} deleteFile={deleteFile} />
               :
               <Others name={section} />
             : <div></div>}
@@ -341,6 +369,8 @@ function App() {
       </main>
       <SideIcons />
     </div>
+    }
+  </>
   );
 }
 

@@ -9,7 +9,7 @@ function FilesView(props) {
     <>
       {
         props.files.map((item, index) => (
-          <FileCard key={index} file={item} />
+          <FileCard key={index} file={item} deleteFile={props.deleteFile} />
         ))
       }
     </>

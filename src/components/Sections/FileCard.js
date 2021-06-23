@@ -6,7 +6,7 @@ import { InsertDriveFile, MoreVert } from '@material-ui/icons';
 
 function FileCard(props) {
 
-  const { fileName, fileDescription, fileHash } = props.file;
+  const { fileName, fileDescription, fileHash, fileId } = props.file;
 
   return (
     <div className='fileCard'>
@@ -21,7 +21,9 @@ function FileCard(props) {
           <ListItem>
             <ListItemText secondary={fileDescription} />
             <ListItemSecondaryAction>
-              <IconButton edge="end" style={{border:'none',outline:'none'}}>
+              <IconButton edge="end" style={{border:'none',outline:'none'}}
+                onClick={() => props.deleteFile(fileId, fileHash)}
+              >
                 <MoreVert />
               </IconButton>
             </ListItemSecondaryAction>

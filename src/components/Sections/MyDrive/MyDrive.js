@@ -33,7 +33,7 @@ function MyDrive(props) {
           <ListItemText primary="Recent" />
         </ListItem>      
       </List>
-      <FilesView files={recents} />
+      <FilesView files={recents} deleteFile={props.deleteFile} />
 
       <List>
         <ListItem>
@@ -52,7 +52,7 @@ function MyDrive(props) {
           <ListItemText primary="Files" />
         </ListItem>      
       </List>
-      <FilesView files={files} />
+      <FilesView files={files} deleteFile={props.deleteFile} />
     </>
   );
 }
