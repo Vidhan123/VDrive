@@ -24,7 +24,7 @@ function App() {
   const [account, setAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
-  const [filesCount, setFilesCount] = useState(0);
+  const [trashFiles, setTrashFiles] = useState([]);
   const [dstorage, setDstorage] = useState(null);
   const [sizeUsed, setSizeUsed] = useState(725.5);
   const [section, setSection] = useState('My Drive');
@@ -56,27 +56,33 @@ function App() {
       setDstorage(dstorage);
       // Get files amount
       const NoOfFiles = await dstorage.methods.fileCount().call()
-      setFilesCount(NoOfFiles);
+      const NoOfTrashFiles = await dstorage.methods.trashCount().call()
       // Load files&sort by the newest
       let file;
-      let myFiles = [];
+      let myFiles = [], myTrashFiles = [];
       for (let i = NoOfFiles; i >= 1; i--) {
         file = await dstorage.methods.files(i).call()
         if(file && file.uploader === account) myFiles.push(file);
       }
+      for (let i = NoOfTrashFiles; i >= 1; i--) {
+        file = await dstorage.methods.trashFiles(i).call()
+        if(file && file.uploader === account) myTrashFiles.push(file);
+      }
       console.log(myFiles);
+      console.log(myTrashFiles);
       setFiles(myFiles);
+      setTrashFiles(myTrashFiles);
     } else {
       window.alert('DStorage contract not deployed to detected network.')
     }
   }
 
   const uploadFile = (myBuffer, file, myDes) => {
-    console.log("Submitting file to IPFS...")
+    // console.log("Submitting file to IPFS...")
 
     // Add file to the IPFS
     ipfs.add(myBuffer, (error, result) => {
-      console.log('IPFS result', result)
+      // console.log('IPFS result', result)
       if(error) {
         console.error(error)
         return;
@@ -126,11 +132,35 @@ function App() {
     }
   }
 
-  // Deleting File
+  // Deleting File(Move to trash)
   const deleteFile = async (id, hash) => {
     setLoading(true);
 
     dstorage.methods.deleteFile(id, hash).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'File moved to Trash',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Deleting File Permanently (Move to trash)
+  const deleteFileForever = async (id, hash) => {
+    setLoading(true);
+
+    dstorage.methods.deleteFileForever(id, hash).send({ from: account }).on('transactionHash', (hash) => {
       setLoading(false);
       Swal.fire({
         allowOutsideClick: false,
@@ -357,7 +387,9 @@ function App() {
             {section ? section === "My Drive" ?
               <MyDrive recents={[]} files={files} deleteFile={deleteFile} />
               :
-              <Others name={section} />
+              <Others name={section} trashFiles={trashFiles}
+                deleteFile={section === 'Trash' ? deleteFileForever : deleteFile}
+              />
             : <div></div>}
           </div>
           <Tooltip title="Upload File" aria-label="add">

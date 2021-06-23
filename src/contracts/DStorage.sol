@@ -3,7 +3,10 @@ pragma solidity ^0.5.0;
 contract DStorage {
   string public name = 'DStorage';
   uint public fileCount = 0;
+  uint public trashCount = 0;
+
   mapping(uint => File) public files;
+  mapping(uint => File) public trashFiles;
 
   struct File {
     uint fileId;
@@ -57,6 +60,18 @@ contract DStorage {
     // Make sure the file hash exists
     require(bytes(_fileHash).length > 0);
 
+    // Moving to trash
+    trashCount++;
+    files[fileId].fileId = trashCount;
+    trashFiles[trashCount] = files[fileId];
+
     delete files[fileId];   
+  }
+
+  function deleteFileForever(uint fileId, string memory _fileHash) public {
+    // Make sure the file hash exists
+    require(bytes(_fileHash).length > 0);
+
+    delete trashFiles[fileId];   
   }
 }

@@ -7,6 +7,8 @@ import { tempFiles } from '../../helpers';
 
 function Others(props) {
 
+  const { name, trashFiles } = props;
+
   return (
     <>
       <List>
@@ -25,7 +27,9 @@ function Others(props) {
       
       <Divider />
       <br />
-      <FilesView files={tempFiles} />
+      <FilesView files={name === 'Trash' ? trashFiles : tempFiles}
+        deleteFile={props.deleteFile}
+      />
     </>
   );
 }
