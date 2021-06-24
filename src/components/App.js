@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import DStorage from '../abis/DStorage.json';
 import Web3 from 'web3';
-import clsx from 'clsx';
-import { CssBaseline, Drawer, Box, AppBar, Toolbar, List, Typography, Divider, IconButton, Badge, Container, Grid, Paper, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader, Fab, Tooltip } from '@material-ui/core';
-import { Menu, ChevronLeft, FolderShared, QueryBuilder, StarBorder, DeleteOutline, Storage, CloudQueue, LibraryBooks, Add } from '@material-ui/icons';
+import { CssBaseline, Container, Fab, Tooltip } from '@material-ui/core';
+import { Add } from '@material-ui/icons';
+import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 import MyDrive from './Sections/MyDrive/MyDrive';
 import Others from './Sections/Others/Others';
 import SideIcons from './SideIcons';
-import LinearWithValueLabel from './LinearProgressWithLabel';
-import { myColor } from './helpers';
+import { myColor, convertBytes, convertBytestoMB } from './helpers';
 import { useStyles } from './styles';
-import Identicon from 'identicon.js';
 import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
 import './App.css';
-
-import logo from '../assets/logo.png';
 
 const ipfsClient = require('ipfs-http-client');
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) // leaving out the arguments will default to these values
@@ -24,9 +21,12 @@ function App() {
   const [account, setAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
+  const [recentFiles, setRecentFiles] = useState([]);
+  const [starredFiles, setStarredFiles] = useState([]);
   const [trashFiles, setTrashFiles] = useState([]);
+  const [sharedFiles, setSharedFiles] = useState([]);
   const [dstorage, setDstorage] = useState(null);
-  const [sizeUsed, setSizeUsed] = useState(725.5);
+  const [sizeUsed, setSizeUsed] = useState(0);
   const [section, setSection] = useState('My Drive');
 
   const loadWeb3 = async () => {
@@ -59,19 +59,31 @@ function App() {
       const NoOfTrashFiles = await dstorage.methods.trashCount().call()
       // Load files&sort by the newest
       let file;
-      let myFiles = [], myTrashFiles = [];
+      let myFiles=[], myRecentFiles=[], myTrashFiles=[], myStarredFiles=[];
+      let totalsize = 0, countRecent = 0;
       for (let i = NoOfFiles; i >= 1; i--) {
         file = await dstorage.methods.files(i).call()
-        if(file && file.uploader === account) myFiles.push(file);
+        if(file && file.uploader === account) {
+          if(file.starred) myStarredFiles.push(file);
+          countRecent++;
+          if(countRecent < 6) myRecentFiles.push(file);
+          myFiles.push(file);
+          totalsize += convertBytestoMB(file.fileSize);
+        }
       }
       for (let i = NoOfTrashFiles; i >= 1; i--) {
         file = await dstorage.methods.trashFiles(i).call()
-        if(file && file.uploader === account) myTrashFiles.push(file);
+        if(file && file.uploader === account) {
+          myTrashFiles.push(file);
+          totalsize += convertBytestoMB(file.fileSize);
+        }
       }
       console.log(myFiles);
-      console.log(myTrashFiles);
       setFiles(myFiles);
+      setRecentFiles(myRecentFiles);
+      setStarredFiles(myStarredFiles);
       setTrashFiles(myTrashFiles);
+      setSizeUsed(totalsize);
     } else {
       window.alert('DStorage contract not deployed to detected network.')
     }
@@ -97,7 +109,7 @@ function App() {
       if(myDes === ''){
         myDes = file.name;
       }
-      dstorage.methods.uploadFile(result[0].hash, result[0].size, file.type, file.name, myDes).send({ from: account }).on('transactionHash', (hash) => {
+      dstorage.methods.uploadFile(result[0].hash, result[0].size, myType, file.name, myDes).send({ from: account }).on('transactionHash', (hash) => {
         setLoading(false);
         Swal.fire({
           allowOutsideClick: false,
@@ -180,6 +192,78 @@ function App() {
     })
   }
 
+  // Star a file
+  const starAFile = async (id, hash) => {
+    setLoading(true);
+
+    dstorage.methods.starAFile(id, hash).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'File added to Starred',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Unstar a file
+  const unstarAFile = async (id, hash) => {
+    setLoading(true);
+
+    dstorage.methods.unstarAFile(id, hash).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'File removed from Starred',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Unstar a file
+  const emptyTrash = async (fileIds) => {
+    setLoading(true);
+
+    dstorage.methods.emptyTrash(fileIds).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'Emptied the Trash',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
   // Open Modal for file upload
   const handleOpenFileUpload = () => {
     let myDes;
@@ -238,10 +322,6 @@ function App() {
 
   const classes = useStyles();
 
-  // const handleSignOut = () => {
-  //   history.push("/");
-  // };
-
   const [open, setOpen] = useState(true);
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -249,146 +329,50 @@ function App() {
   const handleDrawerClose = () => {
     setOpen(false);
   };
-  const fixedHeightPaper = clsx(classes.paper, classes.fixedHeight);
-
-  const myItemsArray = [
-    {
-      name: "My Drive",
-      icon: <LibraryBooks fontSize="large" />
-    },
-    {
-      name: "Shared with me",
-      icon: <FolderShared fontSize="large" />
-    },
-    {
-      name: "Recent",
-      icon: <QueryBuilder fontSize="large" />
-    },
-    {
-      name: "Starred",
-      icon: <StarBorder fontSize="large" />
-    },
-    {
-      name: "Trash",
-      icon: <DeleteOutline fontSize="large" />
-    }
-  ];
-
-  const secondaryListItems = (
-    <div>
-      <List>
-        <ListSubheader inset>Account Details</ListSubheader>
-        <ListItem>
-          <ListItemIcon>
-          {account? 
-            <Avatar src={`data:image/png;base64,${new Identicon(account, 30).toString()}`} />
-            : <span></span>
-          }
-          </ListItemIcon>
-          <ListItemText primary={account && account.substring(0,6)+'...'+account.substring(38,42)} />
-        </ListItem>
-      </List>
-      <Divider />
-      <br />
-      <List>
-        {myItemsArray.map((item, index) => 
-           <ListItem button
-           key={index} 
-           onClick={() => setSection(item.name)}
-           style={{backgroundColor: section === item.name && "rgba(63,81,181,0.4)", color: section === item.name && myColor}}  
-          >
-            <ListItemIcon style={{color: section === item.name && myColor}}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText 
-              disableTypography
-              primary={section === item.name ?
-                <Typography style={{fontWeight: '750'}}>
-                  {item.name}
-                </Typography>
-                :
-                <Typography>{item.name}</Typography>
-              } 
-            />
-         </ListItem>
-        )}
-        <br />
-        <Divider />
-        <br />
-        <ListItem>
-          <ListItemIcon>
-            <CloudQueue fontSize="large" />
-          </ListItemIcon>
-          <ListItemText primary="Storage" />
-        </ListItem>
-        <ListItem>
-          <LinearWithValueLabel left={sizeUsed} />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <Storage fontSize="large" />
-          </ListItemIcon>
-          <ListItemText secondary={`${sizeUsed} MB of 10 GB used`} />
-        </ListItem>
-      </List>
-    </div>
-  );
 
   return (
     <>
     {loading ? <Loading /> :
     <div className={classes.root}>
       <CssBaseline />
-      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-        <Toolbar className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
-            style={{border:'none',outline:'none'}}
-          >
-            <Menu />
-          </IconButton>
-          <div className="header__logo">
-            <img src={logo} alt="logo" />
-          </div>
-          <Typography component="h1" variant="h6" noWrap className={classes.title}>
-            VDrive
-          </Typography>
-          {/* <IconButton color="inherit" 
-          onClick={() => handleSignOut()}
-          >
-            <Badge color="secondary">
-              <PowerSettingsNew />
-            </Badge>
-          </IconButton> */}
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        classes={{
-          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-        }}
+      
+      <Navbar open={open} handleDrawerOpen={handleDrawerOpen} />
+      
+      <Sidebar 
         open={open}
-      >
-        <div className={classes.toolbarIcon}>
-          <IconButton onClick={handleDrawerClose} style={{border:'none',outline:'none'}}>
-            <ChevronLeft />
-          </IconButton>
-        </div>
-        <Divider />
-        {secondaryListItems}
-      </Drawer>
+        handleDrawerClose={handleDrawerClose} 
+        account={account} 
+        section={section} 
+        setSection={setSection} 
+        sizeUsed={sizeUsed}
+      />
+
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
         <Container maxWidth="xl" className={classes.container}>
           <div>
             {section ? section === "My Drive" ?
-              <MyDrive recents={[]} files={files} deleteFile={deleteFile} />
+              <MyDrive 
+                recents={recentFiles} 
+                files={files} 
+                deleteFile={deleteFile} 
+                star={starAFile}
+                unstar={unstarAFile}
+                sL={setLoading}
+              />
               :
-              <Others name={section} trashFiles={trashFiles}
-                deleteFile={section === 'Trash' ? deleteFileForever : deleteFile}
+              <Others 
+                name={section} 
+                trashFiles={trashFiles}
+                recents={recentFiles}
+                starred={starredFiles}
+                shared={sharedFiles}
+                deleteFile={section === 'Trash' ? deleteFileForever : 
+                deleteFile}
+                star={starAFile}
+                unstar={unstarAFile}
+                sL={setLoading}
+                emptyTrash={emptyTrash}
               />
             : <div></div>}
           </div>
@@ -399,6 +383,7 @@ function App() {
           </Tooltip>
         </Container>
       </main>
+
       <SideIcons />
     </div>
     }

@@ -1,4 +1,4 @@
-import React, { useState ,useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -12,7 +12,7 @@ function LinearProgressWithLabel(props) {
         <LinearProgress variant="determinate" {...props} />
       </Box>
       <Box minWidth={35}>
-        <Typography variant="body2" color="textSecondary">{`${Math.round(
+        <Typography variant="body2" color="textSecondary" style={{cursor: 'default'}}>{`${Math.round(
           props.value,
         )}%`}</Typography>
       </Box>

@@ -5,6 +5,11 @@ export function convertBytes(bytes) {
    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 }
 
+export function convertBytestoMB(bytes) {
+   if (bytes === 0) return 0;
+   return Math.round(bytes / Math.pow(1024, 2), 2);
+}
+
 export const myColor = "#3f51b5";
 
 export const tempFiles = [

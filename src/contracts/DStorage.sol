@@ -17,6 +17,7 @@ contract DStorage {
     string fileDescription;
     uint uploadTime;
     address payable uploader;
+    bool starred;
   }
 
   event FileUploaded(
@@ -27,7 +28,8 @@ contract DStorage {
     string fileName, 
     string fileDescription,
     uint uploadTime,
-    address payable uploader
+    address payable uploader,
+    bool starred
   );
 
   constructor() public {
@@ -51,9 +53,23 @@ contract DStorage {
     fileCount ++;
 
     // Add File to the contract
-    files[fileCount] = File(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
+    files[fileCount] = File(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender, false);
     // Trigger an event
-    emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender);
+    emit FileUploaded(fileCount, _fileHash, _fileSize, _fileType, _fileName, _fileDescription, now, msg.sender, false);
+  }
+
+  function starAFile(uint fileId, string memory _fileHash) public {
+    // Make sure the file hash exists
+    require(bytes(_fileHash).length > 0);
+
+    files[fileId].starred = true;
+  }
+
+  function unstarAFile(uint fileId, string memory _fileHash) public {
+    // Make sure the file hash exists
+    require(bytes(_fileHash).length > 0);
+
+    files[fileId].starred = false;
   }
 
   function deleteFile(uint fileId, string memory _fileHash) public {
@@ -73,5 +89,12 @@ contract DStorage {
     require(bytes(_fileHash).length > 0);
 
     delete trashFiles[fileId];   
+  }
+
+  function emptyTrash(uint[] memory fileIds) public {
+    for(uint i=0;i<fileIds.length;i++) {
+      delete trashFiles[fileIds[i]];
+    }
+    trashCount=0;
   }
 }

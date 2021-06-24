@@ -43,6 +43,7 @@ export const useStyles = makeStyles((theme) => ({
     // flexGrow: 1,
     color: 'gray',
     marginRight: '20px',
+    cursor: 'default',
   },
   drawerPaper: {
     position: 'relative',

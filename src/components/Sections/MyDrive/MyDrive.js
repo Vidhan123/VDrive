@@ -8,7 +8,7 @@ import FoldersView from '../FoldersView';
 
 function MyDrive(props) {
 
-  const { recents, files } = props;
+  const { recents, files, star, unstar, deleteFile, sL } = props;
 
   return (
     <>
@@ -16,13 +16,13 @@ function MyDrive(props) {
         <ListItem>
           <ListItemText
             disableTypography
-            primary={<Typography variant="h6">My Drive</Typography>}
+            primary={<Typography variant="h6" style={{cursor: 'default'}}>My Drive</Typography>}
           />
-          <ListItemSecondaryAction>
+          {/* <ListItemSecondaryAction>
             <IconButton edge="end" style={{border:'none',outline:'none'}}>
               <DeleteForever fontSize="large" />
             </IconButton>
-          </ListItemSecondaryAction>
+          </ListItemSecondaryAction> */}
         </ListItem>      
       </List>
       
@@ -30,14 +30,20 @@ function MyDrive(props) {
 
       <List>
         <ListItem>
-          <ListItemText primary="Recent" />
+          <ListItemText primary="Recent" style={{cursor: 'default'}} />
         </ListItem>      
       </List>
-      <FilesView files={recents} deleteFile={props.deleteFile} />
+      <FilesView 
+        files={recents} 
+        deleteFile={deleteFile} 
+        star={star}
+        unstar={unstar}
+        sL={sL}
+      />
 
       <List>
         <ListItem>
-          <ListItemText primary="Folders" />
+          <ListItemText primary="Folders" style={{cursor: 'default'}} />
           <ListItemSecondaryAction>
             <IconButton edge="end" style={{border:'none',outline:'none'}}>
                <Add />
@@ -49,10 +55,16 @@ function MyDrive(props) {
 
       <List>
         <ListItem>
-          <ListItemText primary="Files" />
+          <ListItemText primary="Files" style={{cursor: 'default'}} />
         </ListItem>      
       </List>
-      <FilesView files={files} deleteFile={props.deleteFile} />
+      <FilesView
+        files={files} 
+        deleteFile={deleteFile} 
+        star={star}
+        unstar={unstar}
+        sL={sL}
+      />
     </>
   );
 }
