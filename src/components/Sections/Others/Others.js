@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography } from '@material-ui/core';
+import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography, Tooltip } from '@material-ui/core';
 import { DeleteForever } from '@material-ui/icons';
 import FilesView from '../FilesView';
+import FoldersView from '../FoldersView';
 
 function Others(props) {
 
-  const { name, trashFiles, recents, starred, shared, star, unstar, deleteFile, sL, emptyTrash } = props;
+  const { name, trashFiles, recents, starred, shared, sharedF, star, unstar, deleteFile, sL, emptyTrash, shareAFile } = props;
 
   const [fileIds, setFileIds] = useState([]);
 
@@ -28,11 +29,13 @@ function Others(props) {
           {
             name !== 'Trash' ? <div></div> :
             <ListItemSecondaryAction>
-              <IconButton edge="end" style={{border:'none',outline:'none'}}
-                onClick={() => emptyTrash(fileIds)}
-              >
-                <DeleteForever fontSize="large" />
-              </IconButton>
+              <Tooltip title="Empty Trash" aria-label="delete">
+                <IconButton edge="end" style={{border:'none',outline:'none'}}
+                  onClick={() => emptyTrash(fileIds)}
+                >
+                  <DeleteForever fontSize="large" />
+                </IconButton>
+              </Tooltip>
             </ListItemSecondaryAction>
           }
         </ListItem>      
@@ -40,6 +43,18 @@ function Others(props) {
       
       <Divider />
       <br />
+      
+      {
+        name === 'Shared with me' && 
+        <>
+          <List>
+            <ListItem>
+              <ListItemText primary="Files" style={{cursor: 'default'}} />
+            </ListItem>      
+          </List>
+        </>
+      } 
+
       <FilesView files={
         name === 'Trash' ? trashFiles 
         :
@@ -53,7 +68,20 @@ function Others(props) {
         star={star}
         unstar={unstar}
         sL={sL}
+        shareAFile={shareAFile}
       />
+
+      {
+        name === 'Shared with me' && 
+        <>
+          <List>
+            <ListItem>
+              <ListItemText primary="Folders" style={{cursor: 'default'}} />
+            </ListItem>      
+          </List>
+          <FoldersView folders={sharedF} />
+        </>
+      } 
     </>
   );
 }

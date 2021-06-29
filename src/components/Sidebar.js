@@ -1,4 +1,5 @@
 import React from 'react';
+import { useHistory } from 'react-router-dom';
 import { useStyles } from './styles';
 import clsx from 'clsx';
 import { Drawer, List, Typography, Divider, IconButton, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader } from '@material-ui/core';
@@ -12,6 +13,7 @@ import { myColor } from './helpers';
 function Sidebar(props) {
   const { open, handleDrawerClose, account, section, setSection, sizeUsed } = props;
 
+  let history = useHistory();
   const classes = useStyles();
 
   const myItemsArray = [
@@ -19,10 +21,10 @@ function Sidebar(props) {
       name: "My Drive",
       icon: <LibraryBooks fontSize="large" />
     },
-    // {
-    //   name: "Shared with me",
-    //   icon: <FolderShared fontSize="large" />
-    // },
+    {
+      name: "Shared with me",
+      icon: <FolderShared fontSize="large" />
+    },
     {
       name: "Recent",
       icon: <QueryBuilder fontSize="large" />
@@ -57,7 +59,10 @@ function Sidebar(props) {
         {myItemsArray.map((item, index) => 
            <ListItem button
            key={index} 
-           onClick={() => setSection(item.name)}
+           onClick={() => {
+              setSection(item.name);
+              history.push('/');
+            }}
            style={{backgroundColor: section === item.name && "rgba(63,81,181,0.4)", color: section === item.name && myColor}}  
           >
             <ListItemIcon style={{color: section === item.name && myColor}}>

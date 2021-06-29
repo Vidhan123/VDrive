@@ -5,12 +5,12 @@ import FileCard from './FileCard';
 
 function FilesView(props) {
   
-  const { star, unstar, deleteFile, sL } = props;
+  const { star, unstar, deleteFile, sL, files, shareAFile } = props;
 
   return (
     <>
       {
-        props.files.map((item, index) => (
+        files.map((item, index) => (
           <FileCard 
             key={index} 
             file={item} 
@@ -18,6 +18,7 @@ function FilesView(props) {
             star={star}
             unstar={unstar}
             sL={sL}
+            shareAFile={shareAFile}
           />
         ))
       }

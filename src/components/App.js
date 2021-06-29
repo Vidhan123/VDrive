@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import DStorage from '../abis/DStorage.json';
 import Web3 from 'web3';
 import { CssBaseline, Container, Fab, Tooltip } from '@material-ui/core';
@@ -7,8 +8,9 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import MyDrive from './Sections/MyDrive/MyDrive';
 import Others from './Sections/Others/Others';
+import FolderPage from './Sections/FolderPage';
 import SideIcons from './SideIcons';
-import { myColor, convertBytes, convertBytestoMB } from './helpers';
+import { convertBytestoMB } from './helpers';
 import { useStyles } from './styles';
 import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
@@ -21,10 +23,15 @@ function App() {
   const [account, setAccount] = useState('');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
+  const [allFiles, setAllFiles] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [allFolders, setAllFolders] = useState([]);
   const [recentFiles, setRecentFiles] = useState([]);
   const [starredFiles, setStarredFiles] = useState([]);
   const [trashFiles, setTrashFiles] = useState([]);
   const [sharedFiles, setSharedFiles] = useState([]);
+  const [sharedFolders, setSharedFolders] = useState([]);
+  const [sharedFoldersData, setSharedFoldersData] = useState([]);
   const [dstorage, setDstorage] = useState(null);
   const [sizeUsed, setSizeUsed] = useState(0);
   const [section, setSection] = useState('My Drive');
@@ -33,9 +40,16 @@ function App() {
     if (window.ethereum) {
       window.web3 = new Web3(window.ethereum)
       await window.ethereum.enable()
+
+      window.ethereum.on('accountsChanged', function () {
+        loadBlockchainData()
+      })
     }
     else if (window.web3) {
       window.web3 = new Web3(window.web3.currentProvider)
+      window.ethereum.on('accountsChanged', function () {
+        loadBlockchainData()
+      })
     }
     else {
       window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!')
@@ -57,11 +71,15 @@ function App() {
       // Get files amount
       const NoOfFiles = await dstorage.methods.fileCount().call()
       const NoOfTrashFiles = await dstorage.methods.trashCount().call()
+      // Get folders indexes
+      const NoOfFolders = await dstorage.methods.folderCount().call()
+
       // Load files&sort by the newest
       let file;
       let myFiles=[], myRecentFiles=[], myTrashFiles=[], myStarredFiles=[];
+      let sharedF = [], allF = [];
       let totalsize = 0, countRecent = 0;
-      for (let i = NoOfFiles; i >= 1; i--) {
+      for(let i = NoOfFiles; i >= 1; i--) {
         file = await dstorage.methods.files(i).call()
         if(file && file.uploader === account) {
           if(file.starred) myStarredFiles.push(file);
@@ -70,19 +88,58 @@ function App() {
           myFiles.push(file);
           totalsize += convertBytestoMB(file.fileSize);
         }
+        if(file) {
+          allF.push(file);
+          let re = file.receivers;
+          let k = re.indexOf(account);
+          if(k !== -1) {
+            sharedF.push(file);
+          }
+        }
       }
-      for (let i = NoOfTrashFiles; i >= 1; i--) {
+      for(let i = NoOfTrashFiles; i >= 1; i--) {
         file = await dstorage.methods.trashFiles(i).call()
         if(file && file.uploader === account) {
           myTrashFiles.push(file);
           totalsize += convertBytestoMB(file.fileSize);
         }
       }
-      console.log(myFiles);
+      // Load folders&sort by the newest
+      let folder;
+      let myFolders = [], sharedFo = [], sharedFoData = [], allFo = [];
+      for(let i = NoOfFolders; i >= 1; i--) {
+        folder = await dstorage.methods.folders(i).call()
+        if(folder && folder.uploader === account) {
+          myFolders.push(folder);
+        }
+        if(folder) {
+          allFo.push(folder);
+          let re = folder.receivers;
+          let k = re.indexOf(account);
+          if(k !== -1) {
+            let asd = folder.data;
+            let qwe = asd.split('0Vidhan0');
+            qwe.pop();
+            for(let j=0;j<qwe.length;j++) {
+              let z = allF.filter((file) => {
+                return (file.fileId === qwe[j])
+              })
+              if(z[0]) sharedFoData.push(z[0]);
+            } 
+            sharedFo.push(folder);
+          }
+        }
+      }
+      setAllFiles(allF);
+      setAllFolders(allFo);
+      setSharedFiles(sharedF);
+      setSharedFolders(sharedFo);
+      setSharedFoldersData(sharedFoData);
       setFiles(myFiles);
       setRecentFiles(myRecentFiles);
       setStarredFiles(myStarredFiles);
       setTrashFiles(myTrashFiles);
+      setFolders(myFolders)
       setSizeUsed(totalsize);
     } else {
       window.alert('DStorage contract not deployed to detected network.')
@@ -90,8 +147,7 @@ function App() {
   }
 
   const uploadFile = (myBuffer, file, myDes) => {
-    // console.log("Submitting file to IPFS...")
-
+    
     // Add file to the IPFS
     ipfs.add(myBuffer, (error, result) => {
       // console.log('IPFS result', result)
@@ -240,7 +296,7 @@ function App() {
     })
   }
 
-  // Unstar a file
+  // Empty Trash
   const emptyTrash = async (fileIds) => {
     setLoading(true);
 
@@ -306,6 +362,125 @@ function App() {
     })
   };
 
+  // Create a folder
+  const createFolder = async (name) => {
+    setLoading(true);
+    dstorage.methods.addFolder(name).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'Folder Created',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Update a folder
+  const updateFiles = async (folderId, fileIds) => {
+    setLoading(true);
+
+    dstorage.methods.updateFiles(folderId, fileIds).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'Folder Updated',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Delete a folder
+  const deleteFolder = async (folderId) => {
+    setLoading(true);
+
+    dstorage.methods.remove(folderId).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'Folder Deleted',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Share a file
+  const shareAFile = async (id, hash, re, myRe) => {
+    setLoading(true);
+
+    dstorage.methods.shareAFile(id, hash, re).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        text: `File shared with ${myRe}`,
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
+  // Share a folder
+  const shareAFolder = async (id, re, myRe) => {
+    setLoading(true);
+
+    dstorage.methods.shareAFolder(id, re).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        text: `Folder shared with ${myRe}`,
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
   useEffect(() => {
     const Load = async () => {
       await loadWeb3()
@@ -318,7 +493,11 @@ function App() {
 
   useEffect(() => {
     loadBlockchainData();
-  }, [loading, account])
+  }, [account])
+
+  useEffect(() => {
+    if(loading === false) loadBlockchainData();
+  }, [loading])
 
   const classes = useStyles();
 
@@ -332,6 +511,7 @@ function App() {
 
   return (
     <>
+    <Router>
     {loading ? <Loading /> :
     <div className={classes.root}>
       <CssBaseline />
@@ -350,43 +530,71 @@ function App() {
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
         <Container maxWidth="xl" className={classes.container}>
-          <div>
-            {section ? section === "My Drive" ?
-              <MyDrive 
-                recents={recentFiles} 
-                files={files} 
-                deleteFile={deleteFile} 
+          
+          <Switch>
+            <Route path="/Folders/:folderName">
+              <FolderPage 
+                files={section === 'Shared with me' ? sharedFoldersData : files} 
+                myFiles={allFiles}
+                folders={section === 'Shared with me' ? sharedFolders : folders}
+                updateFiles={updateFiles}
+                deleteFolder={deleteFolder} 
+                shareAFile={shareAFile}
+                shareAFolder={shareAFolder}
                 star={starAFile}
                 unstar={unstarAFile}
+                deleteFile={deleteFile}
                 sL={setLoading}
+                account={account}
               />
-              :
-              <Others 
-                name={section} 
-                trashFiles={trashFiles}
-                recents={recentFiles}
-                starred={starredFiles}
-                shared={sharedFiles}
-                deleteFile={section === 'Trash' ? deleteFileForever : 
-                deleteFile}
-                star={starAFile}
-                unstar={unstarAFile}
-                sL={setLoading}
-                emptyTrash={emptyTrash}
-              />
-            : <div></div>}
-          </div>
-          <Tooltip title="Upload File" aria-label="add">
-            <Fab color="secondary" className={classes.absolute} style={{outline: 'none', border: 'none'}} onClick={handleOpenFileUpload}>
-              <Add />
-            </Fab>
-          </Tooltip>
+            </Route>
+            <Route exact  path="/">
+              <div>
+                {section ? section === "My Drive" ?
+                  <MyDrive 
+                    recents={recentFiles} 
+                    files={files} 
+                    folders={folders}
+                    createFolder={createFolder}
+                    deleteFile={deleteFile} 
+                    star={starAFile}
+                    unstar={unstarAFile}
+                    sL={setLoading}
+                    shareAFile={shareAFile}
+                  />
+                  :
+                  <Others 
+                    name={section} 
+                    trashFiles={trashFiles}
+                    recents={recentFiles}
+                    starred={starredFiles}
+                    shared={sharedFiles}
+                    sharedF={sharedFolders}
+                    deleteFile={section === 'Trash' ? deleteFileForever : 
+                    deleteFile}
+                    star={starAFile}
+                    unstar={unstarAFile}
+                    sL={setLoading}
+                    emptyTrash={emptyTrash}
+                    shareAFile={shareAFile}
+                  />
+                : <div></div>}
+              </div>
+              <Tooltip title="Upload File" aria-label="add">
+                <Fab color="secondary" className={classes.absolute} style={{outline: 'none', border: 'none'}} onClick={handleOpenFileUpload}>
+                  <Add />
+                </Fab>
+              </Tooltip>
+            </Route>
+          </Switch>  
+
         </Container>
       </main>
 
       <SideIcons />
     </div>
     }
+    </Router>
   </>
   );
 }

@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IconButton, List, ListItem,ListItemIcon, ListItemText, ListItemSecondaryAction, Button, Popper, ClickAwayListener, Grow, Paper, MenuItem, MenuList } from '@material-ui/core';
-import { Delete, GetApp, Info, InsertDriveFile, MoreVert, Star, Visibility } from '@material-ui/icons';
+import { IconButton, List, ListItem,ListItemIcon, ListItemText, ListItemSecondaryAction, Popper, ClickAwayListener, Grow, Paper } from '@material-ui/core';
+import { Delete, GetApp, Info, InsertDriveFile, MoreVert, PersonAdd, Star } from '@material-ui/icons';
 import { convertBytes } from '../helpers';
 import moment from 'moment';
 import '../App.css';
 import Swal from 'sweetalert2';
 
 function FileCard(props) {
-  const { star, unstar, deleteFile, sL } = props;
-  const { fileName, fileDescription, fileHash, fileId, fileType, fileSize, uploadTime, starred } = props.file;
+  const { star, unstar, deleteFile, sL, shareAFile } = props;
+  const { fileName, fileDescription, fileHash, fileId, fileType, fileSize, uploadTime, starred, receivers, uploader } = props.file;
 
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
 
   const handleDownload = () => {
     // sL(true);
-    // console.log('Hello')
       fetch('https://ipfs.infura.io/ipfs/' + fileHash, {
       method: 'GET',
       headers: {
@@ -71,12 +70,68 @@ function FileCard(props) {
       +`<h4><b>File Type:</b> ${fileType}</h4>`
       +`<h4><b>File Size:</b> ${convertBytes(fileSize)}</h4>`
       +`<h4><b>Upload Time:</b> ${moment.unix(uploadTime).format('h:mm:ss A M/D/Y')}</h4>`
+      +`<h4><b>Uploaded By</b> ${uploader}</h4>`
       ,
       confirmButtonText: 'Okay',
       icon: 'info',
       backdrop: false,
       customClass: {
         container: 'my-swal'
+      }
+    })
+  }
+
+  const handleShare = (id, hash, receivers) => {
+    let myAd;
+    Swal.fire({
+      input: 'text',
+      title: 'Enter address of receiver',
+      confirmButtonText: 'Continue &rarr;',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      backdrop: false,
+      customClass: {
+        container: 'my-swal'
+      }
+    }).then((result) => {
+      if (result.value) {
+        const answers = result.value;
+        myAd = answers;
+        if(!myAd || myAd === ''){
+          Swal.fire({
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            title: 'Not a valid address',
+            confirmButtonText: 'Okay',
+            icon: 'error',
+            backdrop: false,
+            customClass: {
+              container: 'my-swal'
+            }
+          })
+        }
+        else {
+          let newR = receivers.split('0Vidhan0');
+          newR.pop();
+          let k = newR.indexOf(myAd);
+          if(k === -1) {
+            let mm = receivers += `${myAd}0Vidhan0`;
+            shareAFile(id, hash, mm, myAd);
+          }
+          else {
+            Swal.fire({
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              text: 'You have already shared this file to this address',
+              confirmButtonText: 'Okay',
+              icon: 'info',
+              backdrop: false,
+              customClass: {
+                container: 'my-swal'
+              }
+            })
+          }
+        }
       }
     })
   }
@@ -155,6 +210,14 @@ function FileCard(props) {
                         <Star />
                       </ListItemIcon>
                       <ListItemText primary={starred?'Remove from Starred':'Add to Starred'} />
+                    </ListItem>
+                    <ListItem button
+                      onClick={() => handleShare(fileId, fileHash, receivers)}
+                    >
+                      <ListItemIcon>
+                        <PersonAdd />
+                      </ListItemIcon>
+                      <ListItemText primary="Share" />
                     </ListItem>
                     <ListItem button
                       onClick={() => deleteFile(fileId, fileHash)}

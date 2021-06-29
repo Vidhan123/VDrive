@@ -1,14 +1,39 @@
 import React from 'react';
-import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography, Button } from '@material-ui/core';
-import { Add, DeleteForever, Folder } from '@material-ui/icons';
-
-import { tempFiles ,tempFiles2, tempFolders } from '../../helpers';
+import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography, Tooltip } from '@material-ui/core';
+import { Add } from '@material-ui/icons';
 import FilesView from '../FilesView';
 import FoldersView from '../FoldersView';
 
+import Swal from 'sweetalert2';
+
 function MyDrive(props) {
 
-  const { recents, files, star, unstar, deleteFile, sL } = props;
+  const { recents, files, folders, star, unstar, deleteFile, sL, createFolder, shareAFile } = props;
+
+  const handleCreateFolder = () => {
+    let myName;
+    Swal.fire({
+      input: 'text',
+      title: 'Enter a name for your folder',
+      confirmButtonText: 'Continue &rarr;',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      backdrop: false,
+      customClass: {
+        container: 'my-swal'
+      }
+    }).then((result) => {
+      if (result.value) {
+        const answers = result.value;
+        myName = answers;
+        if(!myName || myName.trim() === ''){
+          myName = 'Default';
+        }
+        
+        createFolder(myName);
+      }
+    })
+  }
 
   return (
     <>
@@ -39,19 +64,24 @@ function MyDrive(props) {
         star={star}
         unstar={unstar}
         sL={sL}
+        shareAFile={shareAFile}
       />
 
       <List>
         <ListItem>
           <ListItemText primary="Folders" style={{cursor: 'default'}} />
           <ListItemSecondaryAction>
-            <IconButton edge="end" style={{border:'none',outline:'none'}}>
-               <Add />
-            </IconButton>
+            <Tooltip title="Create new folder" aria-label="create">
+              <IconButton edge="end" style={{border:'none',outline:'none'}}
+                onClick={handleCreateFolder}
+              >
+                <Add />
+              </IconButton>
+            </Tooltip>
           </ListItemSecondaryAction>
         </ListItem>      
       </List>
-      <FoldersView folders={tempFolders} />
+      <FoldersView folders={folders} />
 
       <List>
         <ListItem>
@@ -64,6 +94,7 @@ function MyDrive(props) {
         star={star}
         unstar={unstar}
         sL={sL}
+        shareAFile={shareAFile}
       />
     </>
   );
