@@ -264,10 +264,10 @@ function FolderPage(props) {
             files
             .filter((file) => {
               if(isAdd && fD) {
-                return (fD.data.indexOf(file.fileId) === -1);
+                return (fD.data.indexOf(`${file.fileId}0Vidhan0`) === -1);
               }
-              else if(fD) {
-                return (fD.data.indexOf(file.fileId) !== -1);
+              else if(fD && !isAdd) {
+                return (fD.data.indexOf(`${file.fileId}0Vidhan0`) !== -1);
               } 
             })
             .map((file, index) => {
