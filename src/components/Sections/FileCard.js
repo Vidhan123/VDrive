@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IconButton, List, ListItem,ListItemIcon, ListItemText, ListItemSecondaryAction, Popper, ClickAwayListener, Grow, Paper } from '@material-ui/core';
-import { Delete, GetApp, Info, InsertDriveFile, MoreVert, PersonAdd, Star } from '@material-ui/icons';
+import { Delete, GetApp, Info, InsertDriveFile, MoreVert, PersonAdd, Restore, Star } from '@material-ui/icons';
 import { convertBytes } from '../helpers';
 import moment from 'moment';
 import '../App.css';
 import Swal from 'sweetalert2';
 
 function FileCard(props) {
-  const { star, unstar, deleteFile, sL, shareAFile } = props;
+  const { star, unstar, deleteFile, sL, shareAFile, restoreFile, section } = props;
   const { fileName, fileDescription, fileHash, fileId, fileType, fileSize, uploadTime, starred, receivers, uploader } = props.file;
 
   const [open, setOpen] = useState(false);
@@ -194,31 +194,49 @@ function FileCard(props) {
                       </ListItemIcon>
                       <ListItemText primary="View" />
                     </ListItem> */}
-                    <ListItem button onClick={() => handleDownload()}>
-                      <ListItemIcon>
-                        <GetApp />
-                      </ListItemIcon>
-                      <ListItemText primary="Download" />
-                    </ListItem>
-                    <ListItem button
-                      onClick={() => {
-                        starred ? unstar(fileId, fileHash)
-                        : star(fileId, fileHash)
-                      }}
-                    >
-                      <ListItemIcon>
-                        <Star />
-                      </ListItemIcon>
-                      <ListItemText primary={starred?'Remove from Starred':'Add to Starred'} />
-                    </ListItem>
-                    <ListItem button
-                      onClick={() => handleShare(fileId, fileHash, receivers)}
-                    >
-                      <ListItemIcon>
-                        <PersonAdd />
-                      </ListItemIcon>
-                      <ListItemText primary="Share" />
-                    </ListItem>
+                    {
+                      section !== 'Trash' &&
+                      <>
+                        <ListItem button onClick={() => handleDownload()}>
+                          <ListItemIcon>
+                            <GetApp />
+                          </ListItemIcon>
+                          <ListItemText primary="Download" />
+                        </ListItem>
+                        <ListItem button
+                          onClick={() => {
+                            starred ? unstar(fileId, fileHash)
+                            : star(fileId, fileHash)
+                          }}
+                        >
+                          <ListItemIcon>
+                            <Star />
+                          </ListItemIcon>
+                          <ListItemText primary={starred?'Remove from Starred':'Add to Starred'} />
+                        </ListItem>
+                        <ListItem button
+                          onClick={() => handleShare(fileId, fileHash, receivers)}
+                        >
+                          <ListItemIcon>
+                            <PersonAdd />
+                          </ListItemIcon>
+                          <ListItemText primary="Share" />
+                        </ListItem>
+                      </>
+                    }
+                    {
+                      section === 'Trash' &&
+                      <>
+                        <ListItem button
+                          onClick={() => restoreFile(fileId, fileHash)}
+                        >
+                          <ListItemIcon>
+                            <Restore />
+                          </ListItemIcon>
+                          <ListItemText primary="Restore" />
+                        </ListItem>
+                      </>  
+                    }
                     <ListItem button
                       onClick={() => deleteFile(fileId, fileHash)}
                     >

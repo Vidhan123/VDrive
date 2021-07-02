@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { Divider, IconButton, List, ListItem, ListItemText,  ListItemSecondaryAction, Typography, Tooltip, ListItemIcon, Modal, Button, Checkbox } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { AddCircleOutline, ArrowBackIos, PersonAddOutlined, DeleteForeverOutlined } from '@material-ui/icons';
+import { AddCircleOutline, ArrowBackIos, PersonAddOutlined, DeleteForeverOutlined, GetAppOutlined, RemoveCircleOutline } from '@material-ui/icons';
 import FilesView from './FilesView';
 import Swal from 'sweetalert2';
+import JSZip from 'jszip';
+import JSZipUtils from 'jszip-utils';
 
 const useStyles = makeStyles((theme) => ({
   modal: {
@@ -22,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 function FolderPage(props) {
-  const { files, folders, updateFiles, deleteFolder, shareAFile, shareAFolder, star, unstar, sL, deleteFile, myFiles, account } = props;
+  const { files, folders, updateFiles, deleteFolder, shareAFile, shareAFolder, star, unstar, sL, deleteFile, myFiles, account, restoreFile, section } = props;
 
   let history = useHistory();
   const { folderName } = useParams();
@@ -32,11 +34,19 @@ function FolderPage(props) {
   const [content, setContent] = useState([]);
   const [checked, setChecked] = useState([]);
   const [selectedIds, setIds] = useState('');
+  const [isAdd, setAdd] = useState(true);
 
   const [open, setOpen] = useState(false);
+  const [done, setDone] = useState(false);
 
   const handleAddFiles = () => {
+    setAdd(true);
     handleOpen2();    
+  }
+
+  const handleRemoveFiles = () => {
+    setAdd(false);
+    handleOpen2();
   }
 
   const handleToggle = (value) => {
@@ -53,10 +63,14 @@ function FolderPage(props) {
     }
 
     setChecked(newChecked);
+    console.log(newIds)
     setIds(newIds);
   };
 
   useEffect(() => {
+    setChecked([]);
+    setContent([]);
+    setIds('');
     let myF = folders.filter((folder) => {
       return (folder.name === folderName)
     })
@@ -64,10 +78,9 @@ function FolderPage(props) {
     if(myF[0]) {
       let newIds;
       let checks = false;
-      let done = false;
       
       setFD(myF[0]);
-      if(myF[0].data.length > 1) {
+      if(myF[0].data.length > 0) {
         let ids = myF[0].data.split('0Vidhan0');
         ids.pop();
         let myFiles = [], listed = [];
@@ -98,22 +111,27 @@ function FolderPage(props) {
           }
         }
         if(myF[0] && checks && !done) {
-          done=true;
-          Swal.fire({
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            title: 'Update Folder',
-            text: 'Some files have been deleted',
-            confirmButtonText: 'Okay',
-            icon: 'info',
-            backdrop: false,
-            customClass: {
-              container: 'my-swal'
-            }
-          }).then(() => {
-            updateFiles(myF[0].folderId, newIds);
-            history.push('/');
-          })
+          if(!done) {
+            Swal.fire({
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              title: 'Update Folder',
+              text: 'Some files have been deleted',
+              confirmButtonText: 'Okay',
+              icon: 'info',
+              backdrop: false,
+              customClass: {
+                container: 'my-swal'
+              }
+            }).then(() => {
+              setDone(true);
+              updateFiles(myF[0].folderId, newIds);
+              setContent([]);
+              setFD(null);
+              setIds('');
+              history.push('/');
+            })
+          }  
         }
         if(!checks) {
           setIds(myF[0].data);
@@ -122,8 +140,7 @@ function FolderPage(props) {
         }
       }
     }
-  
-  }, [files, folders, open])
+  }, [files, folders, open, done])
 
   const [modalStyle,setModalStyle] = useState({
     top: '20%',
@@ -195,22 +212,74 @@ function FolderPage(props) {
     })
   };
 
+  const urlToPromise = (url) =>  {
+    return new Promise(function(resolve, reject) {
+      JSZipUtils.getBinaryContent(url, function (err, data) {
+        if(err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+  };
+
+  const handleDownloadFolder = () => {
+    var zip = new JSZip();
+    var dir = zip.folder(`${folderName}`);
+    for(let i=0;i<content.length;i++) {
+      let url = 'https://ipfs.infura.io/ipfs/' + content[i].fileHash;
+      dir.file(`${content[i].fileName}`, urlToPromise(url), {binary:true});
+    }
+    zip.generateAsync({type:"blob"})
+    .then(function(content) {
+      const url = window.URL.createObjectURL(
+        new Blob([content]),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `${folderName}.zip`,
+      );
+
+      // Append to html link element page
+      document.body.appendChild(link);
+
+      // sL(false);
+      // Start download
+      link.click();
+
+      // Clean up and remove the link
+      link.parentNode.removeChild(link);
+    });
+  };
+
   const body = (
     <div style={modalStyle} className={classes.modal}>
-      <h1 id="simple-modal-title">Add/Remove Files</h1>
+      <h1 id="simple-modal-title">{isAdd ? 'Add' : 'Remove'} Files</h1>
       <div id="simple-modal-description">
         <List>
           {
-            files.map((file, index) => {
-              const labelId = `checkbox-list-secondary-label-${index}`;
+            files
+            .filter((file) => {
+              if(isAdd && fD) {
+                return (fD.data.indexOf(file.fileId) === -1);
+              }
+              else if(fD) {
+                return (fD.data.indexOf(file.fileId) !== -1);
+              } 
+            })
+            .map((file, index) => {
+              const labelId = `checkbox-list-secondary-label-${files.indexOf(file)}`;
               return(
                 <ListItem key={index}>
                   <ListItemText primary={file.fileDescription} />
                   <ListItemSecondaryAction>
                     <Checkbox
                       edge="end"
-                      onChange={() => handleToggle(index)}
-                      checked={checked.indexOf(index) !== -1}
+                      onChange={() => handleToggle(files.indexOf(file))}
+                      // checked={checked.indexOf(files.indexOf(file)) !== -1}
                       inputProps={{ 'aria-labelledby': labelId }}
                     />
                   </ListItemSecondaryAction>
@@ -248,11 +317,25 @@ function FolderPage(props) {
           (fD && fD.uploader === account) ? 
           <>
           <ListItemSecondaryAction>
+            <Tooltip title="Download Folder" aria-label="download">
+              <IconButton edge="end" style={{border:'none',outline:'none',marginRight: '5px'}}
+                  onClick={() => handleDownloadFolder()}
+              >
+                <GetAppOutlined fontSize="large" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Add Files" aria-label="Add">
               <IconButton edge="end" style={{border:'none',outline:'none',marginRight: '5px'}}
                   onClick={() => handleAddFiles()}
               >
                 <AddCircleOutline fontSize="large" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Remove Files" aria-label="remove">
+              <IconButton edge="end" style={{border:'none',outline:'none',marginRight: '5px'}}
+                  onClick={() => handleRemoveFiles()}
+              >
+                <RemoveCircleOutline fontSize="large" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Share Folder" aria-label="Share">
@@ -297,6 +380,8 @@ function FolderPage(props) {
         star={star}
         unstar={unstar}
         sL={sL}
+        restoreFile={restoreFile}
+        section={section}
       />
     </>
   )

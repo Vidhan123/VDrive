@@ -224,6 +224,30 @@ function App() {
     })
   }
 
+  // Deleting File(Move to trash)
+  const restoreFile = async (id, hash) => {
+    setLoading(true);
+
+    dstorage.methods.restoreFile(id, hash).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: 'File Restored',
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
   // Deleting File Permanently (Move to trash)
   const deleteFileForever = async (id, hash) => {
     setLoading(true);
@@ -546,6 +570,8 @@ function App() {
                 deleteFile={deleteFile}
                 sL={setLoading}
                 account={account}
+                restoreFile={restoreFile}
+                section={section}
               />
             </Route>
             <Route exact  path="/">
@@ -561,6 +587,8 @@ function App() {
                     unstar={unstarAFile}
                     sL={setLoading}
                     shareAFile={shareAFile}
+                    restoreFile={restoreFile}
+                    section={section}
                   />
                   :
                   <Others 
@@ -577,6 +605,8 @@ function App() {
                     sL={setLoading}
                     emptyTrash={emptyTrash}
                     shareAFile={shareAFile}
+                    restoreFile={restoreFile}
+                    section={section}
                   />
                 : <div></div>}
               </div>

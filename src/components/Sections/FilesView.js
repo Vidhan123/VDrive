@@ -5,7 +5,7 @@ import FileCard from './FileCard';
 
 function FilesView(props) {
   
-  const { star, unstar, deleteFile, sL, files, shareAFile } = props;
+  const { star, unstar, deleteFile, sL, files, shareAFile, restoreFile, section } = props;
 
   return (
     <>
@@ -19,6 +19,8 @@ function FilesView(props) {
             unstar={unstar}
             sL={sL}
             shareAFile={shareAFile}
+            restoreFile={restoreFile}
+            section={section}
           />
         ))
       }

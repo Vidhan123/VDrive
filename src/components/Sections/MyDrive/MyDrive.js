@@ -8,7 +8,7 @@ import Swal from 'sweetalert2';
 
 function MyDrive(props) {
 
-  const { recents, files, folders, star, unstar, deleteFile, sL, createFolder, shareAFile } = props;
+  const { recents, files, folders, star, unstar, deleteFile, sL, createFolder, shareAFile, restoreFile, section } = props;
 
   const handleCreateFolder = () => {
     let myName;
@@ -65,6 +65,8 @@ function MyDrive(props) {
         unstar={unstar}
         sL={sL}
         shareAFile={shareAFile}
+        restoreFile={restoreFile}
+        section={section}
       />
 
       <List>
@@ -95,6 +97,8 @@ function MyDrive(props) {
         unstar={unstar}
         sL={sL}
         shareAFile={shareAFile}
+        restoreFile={restoreFile}
+        section={section}
       />
     </>
   );

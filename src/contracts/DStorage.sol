@@ -104,6 +104,18 @@ contract DStorage {
     delete files[fileId];   
   }
 
+  function restoreFile(uint fileId, string memory _fileHash) public {
+    // Make sure the file hash exists
+    require(bytes(_fileHash).length > 0);
+
+    // Moving to Drive
+    fileCount++;
+    trashFiles[fileId].fileId = fileCount;
+    files[fileCount] = trashFiles[fileId];
+
+    delete trashFiles[fileId];   
+  }
+
   function deleteFileForever(uint fileId, string memory _fileHash) public {
     // Make sure the file hash exists
     require(bytes(_fileHash).length > 0);

@@ -6,7 +6,7 @@ import FoldersView from '../FoldersView';
 
 function Others(props) {
 
-  const { name, trashFiles, recents, starred, shared, sharedF, star, unstar, deleteFile, sL, emptyTrash, shareAFile } = props;
+  const { name, trashFiles, recents, starred, shared, sharedF, star, unstar, deleteFile, sL, emptyTrash, shareAFile, restoreFile, section } = props;
 
   const [fileIds, setFileIds] = useState([]);
 
@@ -69,6 +69,8 @@ function Others(props) {
         unstar={unstar}
         sL={sL}
         shareAFile={shareAFile}
+        restoreFile={restoreFile}
+        section={section}
       />
 
       {
