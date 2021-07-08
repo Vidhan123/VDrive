@@ -63,7 +63,6 @@ function FolderPage(props) {
     }
 
     setChecked(newChecked);
-    console.log(newIds)
     setIds(newIds);
   };
 

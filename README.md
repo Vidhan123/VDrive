@@ -7,7 +7,7 @@
 ```
 .
 ├── migrations/                -> Contains Migrations for Smart Contracts
-├── src
+├── src/
 |   ├── components/            -> Contains Frontend React pages
 |   └── contracts/             -> Conatains Smart Contracts
 ├── test/                      -> Contains Chai and Mocha tests for Smart Contracts
@@ -25,6 +25,11 @@
 - ReactJs                 (16.13+)
 - Material-UI             (4.11.0+)
 - ES6 JavaScript
+
+
+## Workflow (For uploading a file)
+
+![workflow](/screenshots/workflow.png)
 
 
 ## Features
@@ -48,16 +53,23 @@
 
 ## Screenshots
 
-<!-- #### Homepage:
+![1](/screenshots/1.png)
 
-![Homepage](/screenshots/home.png)
+![2](/screenshots/2.png)
 
+![3](/screenshots/3.png)
 
-#### Profile Page:
+![4](/screenshots/4.png)
 
-![Profile Page](/screenshots/profile1.png)
+![5](/screenshots/5.png)
 
-![Profile Page](/screenshots/profile2.png) -->
+![6](/screenshots/6.png)
+
+![7](/screenshots/7.png)
+
+![8](/screenshots/8.png)
+
+![9](/screenshots/9.png)
 
 
 ## Additional Notes
