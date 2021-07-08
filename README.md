@@ -7,10 +7,16 @@
 ```
 .
 ├── migrations/                -> Contains Migrations for Smart Contracts
-├── src/
+├── public/
+├── screenshots/
+├── src
+|   ├── abis/
+|   ├── assets/
 |   ├── components/            -> Contains Frontend React pages
-|   └── contracts/             -> Conatains Smart Contracts
+|   ├── contracts/             -> Conatains Smart Contracts
+|   └── index.js
 ├── test/                      -> Contains Chai and Mocha tests for Smart Contracts
+├── .env_example
 ├── package.json               -> Npm package.json file
 └── truffle-config.js          -> Configuration file for truffle
 ```
@@ -78,4 +84,4 @@
 
 - If a folder contains a file which is deleted by the user, a prompt for updating folder will appear. On confirmation folder will be automatically updated.
 
-- If a user(sender) tries to share the same file/folder to the same user(receiver) again, the user(sender) will be informed that he has already shared the file/folder with this us. So the user will not be charged for the transaction.
+- If a user(sender) tries to share the same file/folder to the same user(receiver) again, the user(sender) will be informed that he has already shared the file/folder with this user. So the user will not be charged for the transaction.
