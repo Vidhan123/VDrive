@@ -27,6 +27,13 @@ function FolderPage(props) {
   const { files, folders, updateFiles, deleteFolder, shareAFile, shareAFolder, star, unstar, sL, deleteFile, myFiles, account, restoreFile, section } = props;
 
   let history = useHistory();
+
+  useEffect(() => {
+    return () => {
+      history.push('/');
+    }
+  }, [account])
+
   const { folderName } = useParams();
   const classes = useStyles();
 
