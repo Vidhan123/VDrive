@@ -2,8 +2,8 @@ import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { useStyles } from './styles';
 import clsx from 'clsx';
-import { Drawer, List, Typography, Divider, IconButton, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader } from '@material-ui/core';
-import { ChevronLeft, FolderShared, QueryBuilder, StarBorder, DeleteOutline, Storage, CloudQueue, LibraryBooks } from '@material-ui/icons';
+import { Drawer, List, Typography, Divider, IconButton, ListItem, ListItemIcon, ListItemText, Avatar, ListSubheader, Button } from '@material-ui/core';
+import { ChevronLeft, FolderShared, QueryBuilder, StarBorder, DeleteOutline, Storage, CloudQueue, LibraryBooks, DataUsage } from '@material-ui/icons';
 import Identicon from 'identicon.js';
 import LinearWithValueLabel from './LinearProgressWithLabel';
 import './App.css';
@@ -11,7 +11,7 @@ import './App.css';
 import { myColor } from './helpers';
 
 function Sidebar(props) {
-  const { open, handleDrawerClose, account, section, setSection, sizeUsed } = props;
+  const { open, handleDrawerClose, account, section, setSection, sizeUsed, totalSize } = props;
 
   let history = useHistory();
   const classes = useStyles();
@@ -94,9 +94,17 @@ function Sidebar(props) {
         </ListItem>
         <ListItem>
           <ListItemIcon>
-            <Storage fontSize="large" />
+            <DataUsage fontSize="large" />
           </ListItemIcon>
-          <ListItemText secondary={`${sizeUsed} MB of 10 GB used`} style={{cursor: 'default'}} />
+          <ListItemText secondary={`${sizeUsed} MB of ${totalSize} GB used`} style={{cursor: 'default'}} />
+        </ListItem>
+      </List>
+      <List>
+        <ListItem button style={{ backgroundColor: "rgba(63,81,181,0.5)", color: "#fff" }}>
+          <ListItemIcon>
+            <Storage fontSize="large" style={{ color: "#fff" }} />
+          </ListItemIcon>
+          <ListItemText primary="Buy Extra Storage" secondary="5 GB for 100 VID Tokens" />
         </ListItem>
       </List>
     </div>

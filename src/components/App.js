@@ -10,7 +10,7 @@ import MyDrive from './Sections/MyDrive/MyDrive';
 import Others from './Sections/Others/Others';
 import FolderPage from './Sections/FolderPage';
 import SideIcons from './SideIcons';
-import { convertBytestoMB } from './helpers';
+import { convertBytestoMB, convertGBtoMB } from './helpers';
 import { useStyles } from './styles';
 import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
@@ -33,6 +33,7 @@ function App() {
   const [sharedFolders, setSharedFolders] = useState([]);
   const [sharedFoldersData, setSharedFoldersData] = useState([]);
   const [dstorage, setDstorage] = useState(null);
+  const [totalSize, setTotalSize] = useState(10);
   const [sizeUsed, setSizeUsed] = useState(0);
   const [section, setSection] = useState('My Drive');
 
@@ -549,6 +550,7 @@ function App() {
         section={section} 
         setSection={setSection} 
         sizeUsed={sizeUsed}
+        totalSize={totalSize}
       />
 
       <main className={classes.content}>
@@ -577,9 +579,9 @@ function App() {
             <Route exact  path="/">
               <div>
                 {section ? section === "My Drive" ?
-                  <MyDrive 
+                  <MyDrive
                     recents={recentFiles} 
-                    files={files} 
+                    files={files}
                     folders={folders}
                     createFolder={createFolder}
                     deleteFile={deleteFile} 
@@ -611,7 +613,7 @@ function App() {
                 : <div></div>}
               </div>
               <Tooltip title="Upload File" aria-label="add">
-                <Fab color="secondary" className={classes.absolute} style={{outline: 'none', border: 'none'}} onClick={handleOpenFileUpload}>
+                <Fab color="secondary" className={classes.absolute} style={{outline: 'none', border: 'none'}} onClick={handleOpenFileUpload} disabled={sizeUsed >= convertGBtoMB(totalSize)}>
                   <Add />
                 </Fab>
               </Tooltip>

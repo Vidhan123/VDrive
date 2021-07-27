@@ -10,4 +10,9 @@ export function convertBytestoMB(bytes) {
    return Math.round(bytes / Math.pow(1024, 2), 2);
 }
 
+export function convertGBtoMB(bytes) {
+   if (bytes === 0) return 0;
+   return (bytes * 1024);
+}
+
 export const myColor = "#3f51b5";
