@@ -12,7 +12,7 @@ module.exports = async function(deployer) {
   const ethSwap = await EthSwap.deployed()
 
   // Deploy DStorage
-  await deployer.deploy(DStorage);
+  await deployer.deploy(DStorage, ethSwap.address);
 
   // Transfer all tokens to EthSwap (1 million)
   await token.transfer(ethSwap.address, '1000000000000000000000000')

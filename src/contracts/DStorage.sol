@@ -1,7 +1,13 @@
 pragma solidity ^0.5.0;
 
+import "./EthSwap.sol";
+
 contract DStorage {
   string public name = 'DStorage';
+  EthSwap public ethSwap;
+
+  address private deployer;
+
   uint public fileCount = 0;
   uint public trashCount = 0;
   uint public folderCount = 0;
@@ -10,6 +16,8 @@ contract DStorage {
   mapping(uint => Folder) public folders;
 
   mapping(uint => File) public trashFiles;
+
+  mapping(address => uint) public totalSize;
   
   struct File {
     uint fileId;
@@ -52,7 +60,9 @@ contract DStorage {
     bool starred
   );
 
-  constructor() public {
+  constructor(EthSwap _token) public {
+    ethSwap = _token;
+    deployer = msg.sender;
   }
 
   function uploadFile(string memory _fileHash, uint _fileSize, string memory _fileType, string memory _fileName, string memory _fileDescription) public {
@@ -216,5 +226,21 @@ contract DStorage {
   function shareAFolder(uint folderId, string memory _receivers) public { 
     // Moving to Shared Folders
     folders[folderId].receivers = _receivers;
+  }
+
+  function buyStorage(uint amt, uint tokenAmt) public {
+    // Calling transfer fn
+    ethSwap.transferTokensToContract(tokenAmt);
+
+    // Increasing Storage
+    totalSize[msg.sender] = totalSize[msg.sender] + amt;
+  }
+
+  function withdrawTokens(uint tokenAmt, address receiver) public {
+    // Only deployer can call this 
+    require(msg.sender == deployer);
+
+    // Calling transfer fn
+    ethSwap.transferTokensToAccount(tokenAmt, receiver);
   }
 }

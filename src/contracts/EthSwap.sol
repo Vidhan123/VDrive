@@ -57,4 +57,22 @@ contract EthSwap {
     emit TokensSold(msg.sender, address(token), _amount, rate);
   }
 
+  // To Transfer VID tokens to smart contract
+  function transferTokensToContract(uint _amount) public {
+    // User can't sell more tokens than they have
+    require(token.balanceOf(msg.sender) >= _amount);
+
+    // Perform sale
+    token.transferFrom(msg.sender, address(this), _amount);  
+  } 
+
+  // To Transfer VID tokens from smart contract to desired address
+  function transferTokensToAccount(uint _amount, address receiver) public payable {
+    // User can't sell more tokens than they have
+    require(token.balanceOf(address(this)) >= _amount);
+
+    // Perform sale
+    token.transferFrom(address(this), receiver, _amount);  
+  } 
+
 }
