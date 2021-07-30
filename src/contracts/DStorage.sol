@@ -6,7 +6,7 @@ contract DStorage {
   string public name = 'DStorage';
   EthSwap public ethSwap;
 
-  address private deployer;
+  address public deployer;
 
   uint public fileCount = 0;
   uint public trashCount = 0;

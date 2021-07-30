@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import Token from '../abis/Token.json';
+import EthSwap from '../abis/EthSwap.json';
 import DStorage from '../abis/DStorage.json';
 import Web3 from 'web3';
 import { CssBaseline, Container, Fab, Tooltip } from '@material-ui/core';
@@ -15,12 +17,15 @@ import { useStyles } from './styles';
 import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
 import './App.css';
+import Admin from './Sections/Admin';
 
 const ipfsClient = require('ipfs-http-client');
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) // leaving out the arguments will default to these values
 
 function App() {
   const [account, setAccount] = useState('');
+  const [deployer, setDeployer] = useState('');
+  const [tokenBalance, setTokenBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
   const [allFiles, setAllFiles] = useState([]);
@@ -32,6 +37,7 @@ function App() {
   const [sharedFiles, setSharedFiles] = useState([]);
   const [sharedFolders, setSharedFolders] = useState([]);
   const [sharedFoldersData, setSharedFoldersData] = useState([]);
+  const [token, setToken] = useState({});
   const [dstorage, setDstorage] = useState(null);
   const [totalSize, setTotalSize] = useState(10);
   const [sizeUsed, setSizeUsed] = useState(0);
@@ -64,6 +70,7 @@ function App() {
     setAccount(accounts[0]);
     // Network ID
     const networkId = await web3.eth.net.getId()
+
     const networkData = DStorage.networks[networkId]
     if(networkData) {
       // Assign contract
@@ -74,6 +81,27 @@ function App() {
       const NoOfTrashFiles = await dstorage.methods.trashCount().call()
       // Get folders indexes
       const NoOfFolders = await dstorage.methods.folderCount().call()
+
+      // Get deployers address
+      const dep = await dstorage.methods.deployer().call()
+      setDeployer(dep);
+
+      // Load EthSwap
+      let myAddress;
+      const ethSwapData = EthSwap.networks[networkId]
+      if(ethSwapData) {
+        myAddress = ethSwapData.address;
+      }
+
+      // Load Token
+      const tokenData = Token.networks[networkId]
+      if(tokenData) {
+        const token = new web3.eth.Contract(Token.abi, tokenData.address)
+        setToken(token)
+        let tokenBalance = await token.methods.balanceOf(myAddress).call()
+        setTokenBalance(tokenBalance.toString())
+        console.log(tokenBalance.toString());
+      }
 
       // Load files&sort by the newest
       let file;
@@ -576,6 +604,12 @@ function App() {
                 section={section}
               />
             </Route>
+            {
+              deployer === account &&
+              <Route path="/admin">
+                <Admin deployer={deployer} account={account} />
+              </Route>
+            }
             <Route exact  path="/">
               <div>
                 {section ? section === "My Drive" ?
@@ -623,7 +657,7 @@ function App() {
         </Container>
       </main>
 
-      <SideIcons />
+      <SideIcons deployer={deployer} account={account} />
     </div>
     }
     </Router>
