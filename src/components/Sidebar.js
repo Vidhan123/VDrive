@@ -13,15 +13,13 @@ import './Plans/Plans.css';
 import { myColor } from './helpers';
 
 function Sidebar(props) {
-  const { open, handleDrawerClose, account, section, setSection, sizeUsed, totalSize } = props;
-
-  const [vidBal, setVidBal] = useState(0);
+  const { open, handleDrawerClose, account, section, setSection, sizeUsed, totalSize, myTokenBalance, buyStorage } = props;
 
   let history = useHistory();
   const classes = useStyles();
 
-  const handleBuyStorage = (a) => {
-    console.log(a);
+  const handleBuyStorage = (amt, tokenAmt) => {
+    buyStorage(amt.toString(), tokenAmt.toString());
   };
 
   const handleBuyStorageModal = () => {
@@ -31,18 +29,18 @@ function Sidebar(props) {
       title: 'Additional Storage',
       didOpen: () => {
         document.getElementById("b1").addEventListener("click", function() {
-          handleBuyStorage(5);
+          handleBuyStorage(5, 50);
         });
         document.getElementById("b2").addEventListener("click", function() {
-          handleBuyStorage(10);
+          handleBuyStorage(10, 75);
         });
         document.getElementById("b3").addEventListener("click", function() {
-          handleBuyStorage(15);
+          handleBuyStorage(15, 100);
         });
       },
       html: 
       `
-      <h3 style="text-align: left">Available Balance: ${vidBal} VID Tokens</h3> 
+      <h3 style="text-align: left">Available Balance: ${window.web3.utils.fromWei(myTokenBalance)} VID Tokens</h3> 
       <br />
       <br />
       <div class="wrap">
@@ -116,17 +114,17 @@ function Sidebar(props) {
           </div>
       </div>
       <br />
-      <br />
       `
       ,
       width: 1050,
       showConfirmButton: false,
-      // confirmButtonText: 'Okay',
+      showCancelButton: true,
+      cancelButtonText: 'Cancel',
       // icon: 'info',
       backdrop: false,
       customClass: {
         container: 'my-swal'
-      }
+      },
     })
   };
 

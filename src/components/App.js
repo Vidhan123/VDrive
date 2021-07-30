@@ -26,6 +26,7 @@ function App() {
   const [account, setAccount] = useState('');
   const [deployer, setDeployer] = useState('');
   const [tokenBalance, setTokenBalance] = useState('0');
+  const [myTokenBalance, setMyTokenBalance] = useState('0');
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState([]);
   const [allFiles, setAllFiles] = useState([]);
@@ -38,6 +39,7 @@ function App() {
   const [sharedFolders, setSharedFolders] = useState([]);
   const [sharedFoldersData, setSharedFoldersData] = useState([]);
   const [token, setToken] = useState({});
+  const [ethSwapData, setEthSwapData] = useState({});
   const [dstorage, setDstorage] = useState(null);
   const [totalSize, setTotalSize] = useState(10);
   const [sizeUsed, setSizeUsed] = useState(0);
@@ -72,7 +74,9 @@ function App() {
     const networkId = await web3.eth.net.getId()
 
     const networkData = DStorage.networks[networkId]
-    if(networkData) {
+    const ethSwapData = EthSwap.networks[networkId]
+    const tokenData = Token.networks[networkId]
+    if(networkData && accounts[0] && ethSwapData && tokenData) {
       // Assign contract
       const dstorage = new web3.eth.Contract(DStorage.abi, networkData.address)
       setDstorage(dstorage);
@@ -82,25 +86,24 @@ function App() {
       // Get folders indexes
       const NoOfFolders = await dstorage.methods.folderCount().call()
 
+      // Get totalSize
+      const store = await dstorage.methods.totalSize(accounts[0]).call()
+      setTotalSize(parseInt(store)+10);
+
       // Get deployers address
       const dep = await dstorage.methods.deployer().call()
       setDeployer(dep);
 
-      // Load EthSwap
-      let myAddress;
-      const ethSwapData = EthSwap.networks[networkId]
       if(ethSwapData) {
-        myAddress = ethSwapData.address;
-      }
-
-      // Load Token
-      const tokenData = Token.networks[networkId]
-      if(tokenData) {
-        const token = new web3.eth.Contract(Token.abi, tokenData.address)
-        setToken(token)
-        let tokenBalance = await token.methods.balanceOf(myAddress).call()
-        setTokenBalance(tokenBalance.toString())
-        console.log(tokenBalance.toString());
+        setEthSwapData(ethSwapData);
+        if(tokenData) {
+          const token = new web3.eth.Contract(Token.abi, tokenData.address)
+          setToken(token);
+          let tokenBalance = await token.methods.balanceOf(ethSwapData.address).call()
+          let myTokenBalance = await token.methods.balanceOf(accounts[0]).call()
+          setTokenBalance(tokenBalance.toString());
+          setMyTokenBalance(myTokenBalance.toString());
+        } 
       }
 
       // Load files&sort by the newest
@@ -170,8 +173,6 @@ function App() {
       setTrashFiles(myTrashFiles);
       setFolders(myFolders)
       setSizeUsed(totalsize);
-    } else {
-      window.alert('DStorage contract not deployed to detected network.')
     }
   }
 
@@ -534,6 +535,56 @@ function App() {
     })
   }
 
+  // Buy Storage
+  const buyStorage = async (amt, tokenAmt) => {
+    setLoading(true);
+
+    token.methods.approve(ethSwapData.address, window.web3.utils.toWei(tokenAmt)).send({ from: account }).on('transactionHash', (hash) => {
+      dstorage.methods.buyStorage(parseInt(amt), window.web3.utils.toWei(tokenAmt)).send({ from: account }).on('transactionHash', (hash) => {
+        setLoading(false);
+        Swal.fire({
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          title: `Storage Purchased`,
+          confirmButtonText: 'Okay',
+          icon: 'success',
+          backdrop: false,
+          customClass: {
+            container: 'my-swal'
+          }
+        })
+        // window.location.reload()
+      }).on('error', (e) =>{
+        window.alert('Error')
+        setLoading(false);
+      })
+    })
+  }
+
+  // Transfer Tokens
+  const withdrawTokens = async (amt, receiver) => {
+    setLoading(true);
+
+    dstorage.methods.withdrawTokens(window.web3.utils.toWei(amt), receiver).send({ from: account }).on('transactionHash', (hash) => {
+      setLoading(false);
+      Swal.fire({
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        title: `Tokens Transfered`,
+        confirmButtonText: 'Okay',
+        icon: 'success',
+        backdrop: false,
+        customClass: {
+          container: 'my-swal'
+        }
+      })
+      // window.location.reload()
+    }).on('error', (e) =>{
+      window.alert('Error')
+      setLoading(false);
+    })
+  }
+
   useEffect(() => {
     const Load = async () => {
       await loadWeb3()
@@ -579,6 +630,8 @@ function App() {
         setSection={setSection} 
         sizeUsed={sizeUsed}
         totalSize={totalSize}
+        myTokenBalance={myTokenBalance}
+        buyStorage={buyStorage}
       />
 
       <main className={classes.content}>
@@ -607,7 +660,12 @@ function App() {
             {
               deployer === account &&
               <Route path="/admin">
-                <Admin deployer={deployer} account={account} />
+                <Admin 
+                  deployer={deployer} 
+                  account={account} 
+                  tokenBalance={tokenBalance} 
+                  withdrawTokens={withdrawTokens}
+                />
               </Route>
             }
             <Route exact  path="/">

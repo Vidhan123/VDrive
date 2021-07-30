@@ -230,7 +230,7 @@ contract DStorage {
 
   function buyStorage(uint amt, uint tokenAmt) public {
     // Calling transfer fn
-    ethSwap.transferTokensToContract(tokenAmt);
+    ethSwap.transferTokensToContract(tokenAmt, msg.sender);
 
     // Increasing Storage
     totalSize[msg.sender] = totalSize[msg.sender] + amt;
