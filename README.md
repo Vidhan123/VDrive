@@ -56,6 +56,9 @@
   - Empty Trash option to delete all the files in the trash
 - Keep track of the storage used
 - See recently uploaded files
+- Buy Additional Storage (5 GB, 10 GB or 15 GB)
+  - With VID Tokens
+- Owner can transfer the accumulated VID Tokens to another account
 
 ## Screenshots
 
