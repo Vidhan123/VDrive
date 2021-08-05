@@ -212,7 +212,7 @@ function Sidebar(props) {
         </ListItem>
       </List>
       <List>
-        <ListItem button style={{ backgroundColor: "rgba(63,81,181,0.5)", color: "#fff" }} onClick={() => handleBuyStorageModal()}>
+        <ListItem button style={{ backgroundColor: "#3dcbab", color: "#fff" }} onClick={() => handleBuyStorageModal()}>
           <ListItemIcon>
             <Storage fontSize="large" style={{ color: "#fff" }} />
           </ListItemIcon>
