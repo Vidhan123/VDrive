@@ -590,7 +590,7 @@ function App() {
     const Load = async () => {
       await loadWeb3()
       await loadBlockchainData()
-      const resp = await axios.get("https://newsapi.org/v2/top-headlines?language=en&apiKey=dfcf5210cd9548c58bb38b49794fe05f");
+      const resp = await axios.get("https://newsapi.org/v2/everything?q=blockchain&sortBy=publishedAt&language=en&apiKey=dfcf5210cd9548c58bb38b49794fe05f");
       console.log(resp.data.articles);
       setLoading(false);
     }
