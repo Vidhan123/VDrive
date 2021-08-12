@@ -18,6 +18,7 @@ import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
 import './App.css';
 import Admin from './Sections/Admin';
+import axios from 'axios';
 
 const ipfsClient = require('ipfs-http-client');
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) // leaving out the arguments will default to these values
@@ -589,6 +590,8 @@ function App() {
     const Load = async () => {
       await loadWeb3()
       await loadBlockchainData()
+      const resp = await axios.get("https://newsapi.org/v2/top-headlines?language=en&apiKey=dfcf5210cd9548c58bb38b49794fe05f");
+      console.log(resp.data.articles);
       setLoading(false);
     }
     setLoading(true);
