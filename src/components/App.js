@@ -18,7 +18,7 @@ import Swal from 'sweetalert2';
 import Loading from './Loading/Loading';
 import './App.css';
 import Admin from './Sections/Admin';
-import axios from 'axios';
+import News from './Sections/News';
 
 const ipfsClient = require('ipfs-http-client');
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' }) // leaving out the arguments will default to these values
@@ -562,6 +562,32 @@ function App() {
     })
   }
 
+  // Buy Storage
+  const Tip = async (tokenAmt) => {
+    setLoading(true);
+
+    token.methods.approve(ethSwapData.address, window.web3.utils.toWei(tokenAmt)).send({ from: account }).on('transactionHash', (hash) => {
+      dstorage.methods.Tip(window.web3.utils.toWei(tokenAmt)).send({ from: account }).on('transactionHash', (hash) => {
+        setLoading(false);
+        Swal.fire({
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          title: `Tipped Successfully`,
+          confirmButtonText: 'Okay',
+          icon: 'success',
+          backdrop: false,
+          customClass: {
+            container: 'my-swal'
+          }
+        })
+        // window.location.reload()
+      }).on('error', (e) =>{
+        window.alert('Error')
+        setLoading(false);
+      })
+    })
+  }
+
   // Transfer Tokens
   const withdrawTokens = async (amt, receiver) => {
     setLoading(true);
@@ -590,8 +616,6 @@ function App() {
     const Load = async () => {
       await loadWeb3()
       await loadBlockchainData()
-      const resp = await axios.get("https://newsapi.org/v2/everything?q=blockchain&sortBy=publishedAt&language=en&apiKey=dfcf5210cd9548c58bb38b49794fe05f");
-      console.log(resp.data.articles);
       setLoading(false);
     }
     setLoading(true);
@@ -658,6 +682,13 @@ function App() {
                 account={account}
                 restoreFile={restoreFile}
                 section={section}
+              />
+            </Route>
+            <Route path="/news">
+              <News 
+                account={account} 
+                myTokenBalance={myTokenBalance}
+                Tip={Tip}
               />
             </Route>
             {

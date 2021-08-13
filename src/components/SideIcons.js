@@ -2,7 +2,7 @@ import React from 'react';
 import { useHistory } from 'react-router-dom';
 import './App.css';
 import { List, ListItem } from '@material-ui/core';
-import { AccountBalanceWallet, GitHub, LinkedIn, MailOutline } from '@material-ui/icons';
+import { AccountBalanceWallet, Ballot, GitHub, LinkedIn, MailOutline } from '@material-ui/icons';
 
 function SideIcons (props) {
   const { deployer, account } = props;
@@ -30,6 +30,9 @@ function SideIcons (props) {
             <hr style={{ width: "100%" }} />
           </ListItem>
           <br />
+          <ListItem button onClick={() => history.push("/news")}>
+            <Ballot fontSize="large" color="primary" />
+          </ListItem>
           {
             deployer === account &&
             <ListItem button onClick={() => history.push("/admin")}>

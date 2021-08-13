@@ -243,4 +243,9 @@ contract DStorage {
     // Calling transfer fn
     ethSwap.transferTokensToAccount(tokenAmt, receiver);
   }
+
+  function Tip(uint tokenAmt) public {
+    // Calling transfer fn
+    ethSwap.transferTokensToContract(tokenAmt, msg.sender);
+  }
 }
