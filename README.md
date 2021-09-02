@@ -80,6 +80,11 @@
 
 ![9](/screenshots/9.png)
 
+![10](/screenshots/10.png)
+
+![11](/screenshots/11.png)
+
+![12](/screenshots/12.png)
 
 ## Additional Notes
 
