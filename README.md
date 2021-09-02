@@ -56,6 +56,8 @@
   - Empty Trash option to delete all the files in the trash
 - Keep track of the storage used
 - See recently uploaded files
+- Read Blockcahin related news
+  - Reader can tip if he likes the news
 - Buy Additional Storage (5 GB, 10 GB or 15 GB)
   - With VID Tokens
 - Owner can transfer the accumulated VID Tokens to another account
@@ -73,8 +75,6 @@
 ![5](/screenshots/5.png)
 
 ![6](/screenshots/6.png)
-
-![7](/screenshots/7.png)
 
 ![8](/screenshots/8.png)
 
